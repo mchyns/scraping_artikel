@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPS News Scraper - Berita Ekonomi Regional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        
+        /* Warna BPS - berdasarkan palet warna resmi BPS */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .nav-menu {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+        
+        .nav-menu ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        .nav-menu a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-menu a.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            height: fit-content;
+        }
+        
+        .control-panel h3 {
+            color: #1e3a8a;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            overflow: hidden;
+        }
+        
+        .results-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 1.5rem;
+        }
+        
+        .results-header h3 {
+            font-size: 1.3rem;
+        }
+        
+        .results-content {
+            padding: 1.5rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .loading::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .news-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .news-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #3b82f6;
+        }
+        
+        .news-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .news-title:hover {
+            color: #3b82f6;
+        }
+        
+        .news-meta {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        
+        .news-source {
+            display: inline-block;
+            background: #f3f4f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #374151;
+            margin-right: 0.5rem;
+        }
+        
+        .news-category {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e3a8a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .status-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-warning {
+            background: #fefbeb;
+            color: #d97706;
+            border: 1px solid #fed7aa;
+        }
+        
+        .summary-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .summary-section.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .summary-title {
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .summary-text {
+            line-height: 1.6;
+            color: #374151;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .hashtags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hashtag {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .btn-summary {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-summary:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+        
+        .btn-summary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-summary.loading::before {
+            content: "⏳ ";
+        }
+        
+        .filter-section {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-section h4 {
+            color: #1e3a8a;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 0 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .control-panel,
+            .results-panel {
+                margin: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>BPS News Scraper</h1>
+            <p>Monitor Berita Ekonomi Regional - Bangkalan, Madura & Jawa Timur</p>
+            <div class="nav-menu">
+                <ul>
+                    <li><a href="/" class="active">🏠 Scraping</a></li>
+                    <li><a href="/data-manager">📊 Data Manager</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="control-panel">
+                <h3>🎯 Pengaturan Scraping</h3>
+                
+                <div class="form-group">
+                    <label for="topicSelect">Pilih Kategori BPS:</label>
+                    <select id="topicSelect">
+                        <option value="">-- Pilih Kategori --</option>
+                        {% for code, topic in topics.items() %}
+                            {% if topic is mapping and 'name' in topic %}
+                                <option value="{{ code }}">{{ code }} - {{ topic.name }}</option>
+                            {% else %}
+                                <option value="{{ code }}">{{ code }} - {{ topic }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subcategorySelect">Pilih Sub-kategori:</label>
+                    <select id="subcategorySelect" disabled>
+                        <option value="">-- Pilih Kategori Utama Dulu --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regionSelect">Pilih Daerah:</label>
+                    <select id="regionSelect">
+                        <option value="">-- Semua Daerah --</option>
+                        {% for region in regions %}
+                            <option value="{{ region }}">{{ region }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dateInput">Filter Tanggal (opsional):</label>
+                    <input type="date" id="dateInput">
+                </div>
+                
+                <button class="btn" id="scrapeBtn" onclick="startScraping()">
+                    🚀 Mulai Scraping
+                </button>
+            </div>
+            
+            <div class="results-panel">
+                <div class="results-header">
+                    <h3>📰 Hasil Berita</h3>
+                </div>
+                
+                <div class="results-content">
+                    <div class="filter-section">
+                        <h4>🔍 Filter Data Tersimpan</h4>
+                        <div class="filter-controls">
+                            <select id="filterTopic">
+                                <option value="">-- Filter Kategori --</option>
+                                {% for code, topic in topics.items() %}
+                                    {% if topic is mapping and 'name' in topic %}
+                                        <option value="{{ code }}">{{ code }} - {{ topic.name }}</option>
+                                    {% else %}
+                                        <option value="{{ code }}">{{ code }} - {{ topic }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            
+                            <select id="filterRegion">
+                                <option value="">-- Filter Daerah --</option>
+                                {% for region in regions %}
+                                    <option value="{{ region }}">{{ region }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            <input type="date" id="filterDate" placeholder="Filter Tanggal">
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button class="btn" onclick="loadFilteredData()" style="width: auto; padding: 0.5rem 1rem;">
+                                🔍 Terapkan Filter
+                            </button>
+                            
+                            <button class="btn" onclick="exportToCSV()" style="width: auto; padding: 0.5rem 1rem; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                                📊 Export ke CSV
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="resultsArea">
+                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                            <p>📝 Pilih kategori dan klik "Mulai Scraping" untuk mengambil berita terbaru.</p>
+                            <p>Atau gunakan filter di atas untuk melihat data yang sudah tersimpan.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const topics = {{ topics|tojson }};
+        
+        // Update subcategory berdasarkan topic yang dipilih
+        document.getElementById('topicSelect').addEventListener('change', function() {
+            const topicCode = this.value;
+            const subcategorySelect = document.getElementById('subcategorySelect');
+            
+            subcategorySelect.innerHTML = '<option value="">-- Pilih Sub-kategori --</option>';
+            
+            if (topicCode && topics[topicCode] && typeof topics[topicCode] === 'object' && topics[topicCode].subcategories) {
+                subcategorySelect.disabled = false;
+                
+                for (const [subCode, subTopic] of Object.entries(topics[topicCode].subcategories)) {
+                    const option = document.createElement('option');
+                    option.value = subCode;
+                    option.textContent = `${subCode} - ${subTopic.name || subTopic}`;
+                    subcategorySelect.appendChild(option);
+                }
+            } else {
+                subcategorySelect.disabled = true;
+            }
+        });
+        
+        // Fungsi untuk memulai scraping
+        async function startScraping() {
+            const topicCode = document.getElementById('topicSelect').value;
+            const subcategory = document.getElementById('subcategorySelect').value;
+            const region = document.getElementById('regionSelect').value;
+            const dateInput = document.getElementById('dateInput').value;
+            
+            if (!topicCode) {
+                alert('Silakan pilih kategori BPS terlebih dahulu!');
+                return;
+            }
+            
+            const scrapeBtn = document.getElementById('scrapeBtn');
+            const resultsArea = document.getElementById('resultsArea');
+            
+            scrapeBtn.disabled = true;
+            scrapeBtn.textContent = '⏳ Sedang Scraping...';
+            
+            resultsArea.innerHTML = '<div class="loading">Mengambil data berita, mohon tunggu...</div>';
+            
+            try {
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        topic_code: topicCode,
+                        subcategory: subcategory,
+                        region: region,
+                        date_range: dateInput
+                    })
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                resultsArea.innerHTML = `
+                    <div class="status-message status-error">
+                        ❌ Terjadi kesalahan: ${error.message}
+                    </div>
+                `;
+            } finally {
+                scrapeBtn.disabled = false;
+                scrapeBtn.textContent = '🚀 Mulai Scraping';
+            }
+        }
+        
+        // Fungsi untuk menampilkan hasil
+        function displayResults(response) {
+            const resultsArea = document.getElementById('resultsArea');
+            
+            let statusClass = 'status-success';
+            if (response.status === 'error') statusClass = 'status-error';
+            if (response.status === 'warning') statusClass = 'status-warning';
+            
+            let html = `<div class="status-message ${statusClass}">${response.message}</div>`;
+            
+            if (response.data && response.data.length > 0) {
+                response.data.forEach(item => {
+                    html += `
+                        <div class="news-item">
+                            <a href="${item.link}" target="_blank" class="news-title">${item.title}</a>
+                            <div class="news-meta">
+                                <span class="news-source">${item.source}</span>
+                                <span class="news-category">${item.topic_name}</span>
+                                ${item.subcategory ? `<span class="news-category">${item.subcategory}</span>` : ''}
+                            </div>
+                            <div class="news-meta">
+                                � Dipublikasi: ${item.date || 'Tidak diketahui'} | 📍 ${item.region} | 🕒 Discraping: ${new Date(item.scraped_at).toLocaleString('id-ID')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            resultsArea.innerHTML = html;
+        }
+        
+        // Fungsi untuk memuat data dengan filter
+        async function loadFilteredData() {
+            const topicFilter = document.getElementById('filterTopic').value;
+            const regionFilter = document.getElementById('filterRegion').value;
+            const dateFilter = document.getElementById('filterDate').value;
+            
+            const resultsArea = document.getElementById('resultsArea');
+            resultsArea.innerHTML = '<div class="loading">Memuat data tersimpan...</div>';
+            
+            try {
+                const params = new URLSearchParams();
+                if (topicFilter) params.append('topic', topicFilter);
+                if (regionFilter) params.append('region', regionFilter);
+                if (dateFilter) params.append('date', dateFilter);
+                
+                const response = await fetch(`/data?${params}`);
+                const data = await response.json();
+                
+                displayResults(data);
+                
+            } catch (error) {
+                resultsArea.innerHTML = `
+                    <div class="status-message status-error">
+                        ❌ Gagal memuat data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Fungsi untuk export data ke CSV
+        async function exportToCSV() {
+            try {
+                const topicFilter = document.getElementById('filterTopic').value;
+                const regionFilter = document.getElementById('filterRegion').value;
+                const dateFilter = document.getElementById('filterDate').value;
+                
+                // Buat parameter URL
+                const params = new URLSearchParams();
+                if (topicFilter) params.append('topic', topicFilter);
+                if (regionFilter) params.append('region', regionFilter);
+                if (dateFilter) params.append('date', dateFilter);
+                
+                // Tampilkan loading state
+                const exportBtn = event.target;
+                const originalText = exportBtn.textContent;
+                exportBtn.disabled = true;
+                exportBtn.textContent = '⏳ Mengunduh...';
+                
+                // Request file CSV
+                const response = await fetch(`/export-csv?${params}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Gagal mengunduh file');
+                }
+                
+                // Dapatkan nama file dari header response
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'bps_news_data.csv';
+                if (contentDisposition) {
+                    const matches = /filename[^;=\\n]*=((['"]).*?\\2|[^;\\n]*)/.exec(contentDisposition);
+                    if (matches != null && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                // Tampilkan pesan sukses
+                const resultsArea = document.getElementById('resultsArea');
+                const successMsg = document.createElement('div');
+                successMsg.className = 'status-message status-success';
+                successMsg.innerHTML = `✅ File CSV berhasil diunduh: ${filename}`;
+                resultsArea.insertBefore(successMsg, resultsArea.firstChild);
+                
+                // Hapus pesan sukses setelah 5 detik
+                setTimeout(() => {
+                    if (successMsg.parentNode) {
+                        successMsg.parentNode.removeChild(successMsg);
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                // Tampilkan pesan error
+                const resultsArea = document.getElementById('resultsArea');
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'status-message status-error';
+                errorMsg.innerHTML = `❌ Gagal mengunduh CSV: ${error.message}`;
+                resultsArea.insertBefore(errorMsg, resultsArea.firstChild);
+                
+                // Hapus pesan error setelah 5 detik
+                setTimeout(() => {
+                    if (errorMsg.parentNode) {
+                        errorMsg.parentNode.removeChild(errorMsg);
+                    }
+                }, 5000);
+            } finally {
+                // Kembalikan tombol ke state normal
+                const exportBtn = event.target;
+                exportBtn.disabled = false;
+                exportBtn.textContent = '📊 Export ke CSV';
+            }
+        }
+        
+        // Cache untuk menyimpan summary yang sudah dimuat
+        const summaryCache = new Map();
+        
+        // Fungsi untuk toggle summary
+        async function toggleSummary(summaryId, url) {
+            const summaryDiv = document.getElementById(summaryId);
+            const btn = event.target;
+            
+            if (summaryDiv.classList.contains('show')) {
+                // Sembunyikan summary
+                summaryDiv.classList.remove('show');
+                btn.textContent = '📝 Buat Ringkasan';
+                return;
+            }
+            
+            // Tampilkan summary
+            summaryDiv.classList.add('show');
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.textContent = '⏳ Membuat ringkasan...';
+            
+            // Cek cache terlebih dahulu
+            if (summaryCache.has(url)) {
+                const cachedData = summaryCache.get(url);
+                displaySummary(summaryDiv, cachedData);
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                btn.textContent = '📝 Sembunyikan Ringkasan';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Simpan ke cache
+                    summaryCache.set(url, data);
+                    displaySummary(summaryDiv, data);
+                    btn.textContent = '📝 Sembunyikan Ringkasan';
+                } else {
+                    summaryDiv.innerHTML = `
+                        <div class="status-message status-error">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                    btn.textContent = '📝 Coba Lagi';
+                }
+                
+            } catch (error) {
+                summaryDiv.innerHTML = `
+                    <div class="status-message status-error">
+                        ❌ Gagal memuat ringkasan: ${error.message}
+                    </div>
+                `;
+                btn.textContent = '📝 Coba Lagi';
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+        
+        // Fungsi untuk menampilkan summary
+        function displaySummary(summaryDiv, data) {
+            const hashtagsHtml = data.hashtags && data.hashtags.length > 0 
+                ? `<div class="hashtags">
+                     ${data.hashtags.map(tag => `<span class="hashtag">${tag}</span>`).join('')}
+                   </div>`
+                : '';
+            
+            const publishedDate = data.published_date || 'Tanggal tidak diketahui';
+            
+            summaryDiv.innerHTML = `
+                <div class="summary-title">📄 Ringkasan Berita:</div>
+                <div class="summary-text">${data.summary}</div>
+                ${hashtagsHtml}
+                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 0.5rem;">
+                    📅 <strong>Dipublikasi:</strong> ${publishedDate}<br>
+                    📊 <strong>Panjang artikel:</strong> ${data.content_length || 0} karakter
+                </div>
+            `;
+        }
+        
+        // Muat data tersimpan saat halaman dimuat
+        window.addEventListener('load', function() {
+            loadFilteredData();
+        });
+    </script>
+</body>
+</html>
