@@ -140,13 +140,7 @@ Data tersimpan di folder `data/` dengan format:
 Aplikasi fokus pada berita dari wilayah:
 - **Bangkalan**
 - **Madura** (secara umum)  
-- **Jawa Timur** dan kota-kota besar:
-  - Surabaya, Malang, Kediri, Blitar
-  - Madiun, Mojokerto, Pasuruan
-  - Probolinggo, Jember, Banyuwangi
-  - Bondowoso, Situbondo, Lumajang
-  - Bojonegoro, Tuban, Lamongan
-  - Gresik, Sidoarjo
+- **Jawa Timur**
 
 ## 📝 Catatan Teknis
 
@@ -156,23 +150,6 @@ Aplikasi fokus pada berita dari wilayah:
 - **Data Deduplication**: Mencegah duplikasi link yang sama
 - **Responsive Design**: Interface yang responsif untuk berbagai ukuran layar
 
-## 🛠️ Pengembangan Lanjutan
-
-Untuk pengembangan lebih lanjut, Anda dapat:
-1. Menambah sumber berita selain Google
-2. Implementasi machine learning untuk klasifikasi otomatis
-3. Scheduling otomatis dengan cron job
-4. Export ke format Excel/CSV
-5. Integrasi dengan database (PostgreSQL, MongoDB)
-6. API endpoint untuk integrasi sistem lain
-
-## 📞 Support
-
-Jika mengalami masalah:
-1. Pastikan koneksi internet stabil
-2. Check apakah semua dependencies terinstall
-3. Periksa log error di terminal
-4. Restart aplikasi jika diperlukan
 
 ---
 
