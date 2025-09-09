@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "keyword": "ikan",
+    "category": "A",
+    "subcategory": "Perikanan",
+    "created_at": "2025-09-09T14:30:43.733191"
+  },
+  {
+    "id": 2,
+    "keyword": "dolar",
+    "category": "K",
+    "subcategory": "Jasa Perantara Keuangan",
+    "created_at": "2025-09-09T14:38:38.512308"
+  },
+  {
+    "id": 3,
+    "keyword": "emas",
+    "category": "B",
+    "subcategory": "Pertambangan Bijih Logam",
+    "created_at": "2025-09-09T15:01:09.111908"
+  },
+  {
+    "id": 4,
+    "keyword": "rentenir",
+    "category": "K",
+    "subcategory": "Jasa Perantara Keuangan",
+    "created_at": "2025-09-09T15:02:02.036598"
+  },
+  {
+    "id": 5,
+    "keyword": "leasing",
+    "category": "K",
+    "subcategory": "Jasa Perantara Keuangan",
+    "created_at": "2025-09-09T15:02:16.329089"
+  },
+  {
+    "id": 6,
+    "keyword": "BCA",
+    "category": "K",
+    "subcategory": "Jasa Perantara Keuangan",
+    "created_at": "2025-09-09T15:03:33.110589"
+  },
+  {
+    "id": 7,
+    "keyword": "Jagung",
+    "category": "A",
+    "subcategory": "Tanaman Pangan",
+    "created_at": "2025-09-09T15:05:44.808977"
+  }
+]

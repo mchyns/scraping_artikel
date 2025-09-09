@@ -388,6 +388,75 @@
                 margin: 0 10px;
             }
         }
+        
+        /* Keywords Styles */
+        .keywords-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .keyword-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .keyword-checkbox:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .keyword-checkbox input[type="checkbox"] {
+            margin: 0;
+            width: auto;
+        }
+        
+        .keyword-checkbox label {
+            margin: 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        
+        .keyword-checkbox.checked {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+        }
+        
+        .help-text a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+        
+        .keywords-empty {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -399,6 +468,7 @@
                 <ul>
                     <li><a href="/" class="active">🏠 Scraping</a></li>
                     <li><a href="/data-manager">📊 Data Manager</a></li>
+                    <li><a href="/filter-manager">🔍 Filter Manager</a></li>
                 </ul>
             </div>
         </div>
@@ -443,6 +513,14 @@
                 <div class="form-group">
                     <label for="dateInput">Filter Tanggal (opsional):</label>
                     <input type="date" id="dateInput">
+                </div>
+                
+                <div class="form-group" id="keywordsSection">
+                    <label>🔍 Keywords Tambahan (opsional):</label>
+                    <div id="keywordsList" class="keywords-list">
+                        <!-- Keywords akan dimuat di sini -->
+                    </div>
+                    <p class="help-text">Pilih keywords tambahan untuk mempersempit pencarian. <a href="/filter-manager" target="_blank">Kelola keywords →</a></p>
                 </div>
                 
                 <button class="btn" id="scrapeBtn" onclick="startScraping()">
@@ -505,6 +583,101 @@
     <script>
         const topics = {{ topics|tojson }};
         
+        // Load keywords when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadKeywords();
+        });
+        
+        // Load keywords dari server
+        function loadKeywords() {
+            fetch('/api/keywords')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.allKeywords = data.keywords;
+                        updateKeywordsDisplay();
+                    } else {
+                        console.error('Gagal memuat keywords');
+                        // Show empty state even if failed to load
+                        updateKeywordsDisplay();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading keywords:', error);
+                    // Show empty state even if error
+                    updateKeywordsDisplay();
+                });
+        }
+        
+        // Update display keywords berdasarkan kategori dan sub-kategori yang dipilih
+        function updateKeywordsDisplay() {
+            const selectedTopic = document.getElementById('topicSelect').value;
+            const selectedSubcategory = document.getElementById('subcategorySelect').value;
+            
+            if (!window.allKeywords) {
+                displayKeywords([]);
+                return;
+            }
+            
+            let filteredKeywords = window.allKeywords;
+            
+            // Filter berdasarkan kategori yang dipilih
+            if (selectedTopic) {
+                filteredKeywords = filteredKeywords.filter(k => k.category === selectedTopic);
+                
+                // Jika ada sub-kategori yang dipilih, filter juga berdasarkan sub-kategori
+                if (selectedSubcategory) {
+                    filteredKeywords = filteredKeywords.filter(k => k.subcategory === selectedSubcategory);
+                }
+            } else {
+                // Jika tidak ada kategori yang dipilih, tampilkan pesan
+                filteredKeywords = [];
+            }
+            
+            displayKeywords(filteredKeywords);
+        }
+        
+        // Display keywords sebagai checkbox
+        function displayKeywords(keywords) {
+            const container = document.getElementById('keywordsList');
+            const selectedTopic = document.getElementById('topicSelect').value;
+            
+            if (!selectedTopic) {
+                container.innerHTML = '<div class="keywords-empty">Pilih kategori untuk melihat keywords yang tersedia. <a href="/filter-manager" target="_blank">Kelola keywords →</a></div>';
+                return;
+            }
+            
+            if (!keywords || keywords.length === 0) {
+                container.innerHTML = '<div class="keywords-empty">Tidak ada keywords untuk kategori ini. <a href="/filter-manager" target="_blank">Tambah keywords →</a></div>';
+                return;
+            }
+            
+            container.innerHTML = keywords.map(keyword => `
+                <div class="keyword-checkbox" onclick="toggleKeyword(this)">
+                    <input type="checkbox" id="keyword_${keyword.id}" value="${keyword.keyword}">
+                    <label for="keyword_${keyword.id}">${keyword.keyword}</label>
+                </div>
+            `).join('');
+        }
+        
+        // Toggle keyword checkbox
+        function toggleKeyword(element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                element.classList.add('checked');
+            } else {
+                element.classList.remove('checked');
+            }
+        }
+        
+        // Get selected keywords
+        function getSelectedKeywords() {
+            const checkboxes = document.querySelectorAll('#keywordsList input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
         // Update subcategory berdasarkan topic yang dipilih
         document.getElementById('topicSelect').addEventListener('change', function() {
             const topicCode = this.value;
@@ -517,13 +690,43 @@
                 
                 for (const [subCode, subTopic] of Object.entries(topics[topicCode].subcategories)) {
                     const option = document.createElement('option');
-                    option.value = subCode;
-                    option.textContent = `${subCode} - ${subTopic.name || subTopic}`;
+                    
+                    // Handle different subcategory structures
+                    let subcategoryName = '';
+                    if (typeof subTopic === 'string') {
+                        subcategoryName = subTopic;
+                        option.value = subTopic;
+                    } else if (subTopic && subTopic.name) {
+                        subcategoryName = subTopic.name;
+                        option.value = subTopic.name;
+                    } else if (subTopic && subTopic.subtopics && subTopic.subtopics.length > 0) {
+                        // For categories with subtopics, add each subtopic as separate option
+                        subTopic.subtopics.forEach(subtopic => {
+                            const subOption = document.createElement('option');
+                            subOption.value = subtopic;
+                            subOption.textContent = subtopic;
+                            subcategorySelect.appendChild(subOption);
+                        });
+                        continue;
+                    } else {
+                        subcategoryName = `Sub-kategori ${subCode}`;
+                        option.value = subCode;
+                    }
+                    
+                    option.textContent = subcategoryName;
                     subcategorySelect.appendChild(option);
                 }
             } else {
                 subcategorySelect.disabled = true;
             }
+            
+            // Update keywords display berdasarkan kategori yang dipilih
+            updateKeywordsDisplay();
+        });
+        
+        // Update keywords saat sub-kategori berubah
+        document.getElementById('subcategorySelect').addEventListener('change', function() {
+            updateKeywordsDisplay();
         });
         
         // Fungsi untuk memulai scraping
@@ -532,6 +735,7 @@
             const subcategory = document.getElementById('subcategorySelect').value;
             const region = document.getElementById('regionSelect').value;
             const dateInput = document.getElementById('dateInput').value;
+            const selectedKeywords = getSelectedKeywords();
             
             if (!topicCode) {
                 alert('Silakan pilih kategori BPS terlebih dahulu!');
@@ -556,7 +760,8 @@
                         topic_code: topicCode,
                         subcategory: subcategory,
                         region: region,
-                        date_range: dateInput
+                        date_range: dateInput,
+                        keywords: selectedKeywords
                     })
                 });
                 

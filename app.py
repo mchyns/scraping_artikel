@@ -201,7 +201,7 @@ class GoogleNewsScraper:
             print(f"Error scraping: {e}")
             return []
     
-    def scrape_by_topic(self, topic_code, subcategory=None, region="", date_range=""):
+    def scrape_by_topic(self, topic_code, subcategory=None, region="", date_range="", keywords=None):
         """Scraping berdasarkan topik BPS"""
         results = []
         
@@ -212,13 +212,32 @@ class GoogleNewsScraper:
         
         # Jika ada subcategory
         if subcategory and 'subcategories' in topic:
-            if subcategory in topic['subcategories']:
-                subcat = topic['subcategories'][subcategory]
-                query = subcat['name']
+            # Cari subcategory berdasarkan nama, bukan key
+            found_subcat = None
+            found_subcat_name = None
+            
+            for subcat_key, subcat_data in topic['subcategories'].items():
+                if isinstance(subcat_data, dict):
+                    if subcat_data.get('name') == subcategory:
+                        found_subcat = subcat_data
+                        found_subcat_name = subcategory
+                        break
+                    # Cek juga di subtopics jika ada
+                    if 'subtopics' in subcat_data and subcategory in subcat_data['subtopics']:
+                        found_subcat = {'name': subcategory}
+                        found_subcat_name = subcategory
+                        break
+                elif subcat_data == subcategory:
+                    found_subcat = {'name': subcategory}
+                    found_subcat_name = subcategory
+                    break
+            
+            if found_subcat:
+                query = found_subcat_name
                 
                 # Jika ada subtopics
-                if 'subtopics' in subcat:
-                    for subtopic in subcat['subtopics']:
+                if 'subtopics' in found_subcat:
+                    for subtopic in found_subcat['subtopics']:
                         sub_results = self.search_news(subtopic, region, date_range)
                         for result in sub_results:
                             result['topic_code'] = topic_code
@@ -227,6 +246,20 @@ class GoogleNewsScraper:
                             result['region'] = region
                         results.extend(sub_results)
                         time.sleep(1)  # Delay untuk menghindari rate limit
+                        
+                        # Scraping dengan keywords tambahan jika ada
+                        if keywords:
+                            for keyword in keywords:
+                                keyword_query = f"{subtopic} {keyword}"
+                                keyword_results = self.search_news(keyword_query, region, date_range)
+                                for result in keyword_results:
+                                    result['topic_code'] = topic_code
+                                    result['topic_name'] = topic['name']
+                                    result['subcategory'] = subtopic
+                                    result['region'] = region
+                                    result['keyword_used'] = keyword
+                                results.extend(keyword_results)
+                                time.sleep(1)
                 else:
                     sub_results = self.search_news(query, region, date_range)
                     for result in sub_results:
@@ -235,6 +268,20 @@ class GoogleNewsScraper:
                         result['subcategory'] = query
                         result['region'] = region
                     results.extend(sub_results)
+                    
+                    # Scraping dengan keywords tambahan jika ada
+                    if keywords:
+                        for keyword in keywords:
+                            keyword_query = f"{query} {keyword}"
+                            keyword_results = self.search_news(keyword_query, region, date_range)
+                            for result in keyword_results:
+                                result['topic_code'] = topic_code
+                                result['topic_name'] = topic['name']
+                                result['subcategory'] = query
+                                result['region'] = region
+                                result['keyword_used'] = keyword
+                            results.extend(keyword_results)
+                            time.sleep(1)
         else:
             # Scraping topik utama
             query = topic['name'] if isinstance(topic, dict) and 'name' in topic else topic
@@ -244,6 +291,19 @@ class GoogleNewsScraper:
                 result['topic_name'] = query
                 result['region'] = region
             results.extend(main_results)
+            
+            # Scraping dengan keywords tambahan jika ada
+            if keywords:
+                for keyword in keywords:
+                    keyword_query = f"{query} {keyword}"
+                    keyword_results = self.search_news(keyword_query, region, date_range)
+                    for result in keyword_results:
+                        result['topic_code'] = topic_code
+                        result['topic_name'] = query
+                        result['region'] = region
+                        result['keyword_used'] = keyword
+                    results.extend(keyword_results)
+                    time.sleep(1)
             
         return results
 
@@ -735,9 +795,31 @@ def load_from_json(filename):
             return []
     return []
 
+def load_keywords():
+    """Memuat daftar keywords dari file JSON"""
+    filepath = 'data/keywords.json'
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_keywords(keywords):
+    """Menyimpan daftar keywords ke file JSON"""
+    filepath = 'data/keywords.json'
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(keywords, f, ensure_ascii=False, indent=2)
+        return True
+    except:
+        return False
+
 @app.route('/')
 def index():
-    return render_template('index.html', topics=BPS_TOPICS, regions=TARGET_REGIONS)
+    keywords = load_keywords()
+    return render_template('index.html', topics=BPS_TOPICS, regions=TARGET_REGIONS, keywords=keywords)
 
 @app.route('/scrape', methods=['POST'])
 def scrape_news():
@@ -747,9 +829,10 @@ def scrape_news():
         subcategory = data.get('subcategory', '')
         region = data.get('region', '')
         date_range = data.get('date_range', '')
+        keywords = data.get('keywords', [])  # Ambil keywords yang dipilih
         
         scraper = GoogleNewsScraper()
-        results = scraper.scrape_by_topic(topic_code, subcategory, region, date_range)
+        results = scraper.scrape_by_topic(topic_code, subcategory, region, date_range, keywords)
         
         if results:
             # Simpan hasil scraping
@@ -815,7 +898,7 @@ def get_data():
     except Exception as ea:
         return jsonify({
             'status': 'error',
-            'message': f'Terjadi kesalahan: {str(e)}',
+            'message': f'Terjadi kesalahan: {str(ea)}',
             'data': [],
             'total': 0
         })
@@ -1003,6 +1086,115 @@ def data_manager():
                              topics=BPS_TOPICS,
                              regions=TARGET_REGIONS,
                              error=str(e))
+
+@app.route('/filter-manager')
+def filter_manager():
+    """Halaman untuk mengelola keywords filter"""
+    keywords = load_keywords()
+    return render_template('filter_manager.html', keywords=keywords, topics=BPS_TOPICS)
+
+@app.route('/api/keywords', methods=['GET'])
+def get_keywords():
+    """API untuk mendapatkan daftar keywords"""
+    keywords = load_keywords()
+    return jsonify({'status': 'success', 'keywords': keywords})
+
+@app.route('/api/keywords', methods=['POST'])
+def add_keyword():
+    """API untuk menambah keyword baru"""
+    try:
+        data = request.get_json()
+        keyword = data.get('keyword', '').strip()
+        category = data.get('category', '').strip()
+        subcategory = data.get('subcategory', '').strip()
+        
+        if not keyword or not category or not subcategory:
+            return jsonify({'status': 'error', 'message': 'Keyword, kategori, dan sub-kategori harus diisi'})
+        
+        keywords = load_keywords()
+        
+        # Cek apakah keyword sudah ada di kategori dan sub-kategori yang sama
+        for kw in keywords:
+            if (kw['keyword'].lower() == keyword.lower() and 
+                kw.get('category', '') == category and 
+                kw.get('subcategory', '') == subcategory):
+                return jsonify({'status': 'error', 'message': 'Keyword sudah ada di kategori dan sub-kategori ini'})
+        
+        # Tambah keyword baru
+        new_keyword = {
+            'id': max([kw.get('id', 0) for kw in keywords] + [0]) + 1,
+            'keyword': keyword,
+            'category': category,
+            'subcategory': subcategory,
+            'created_at': datetime.now().isoformat()
+        }
+        keywords.append(new_keyword)
+        
+        if save_keywords(keywords):
+            return jsonify({'status': 'success', 'message': 'Keyword berhasil ditambahkan', 'keyword': new_keyword})
+        else:
+            return jsonify({'status': 'error', 'message': 'Gagal menyimpan keyword'})
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/keywords/<int:keyword_id>', methods=['PUT'])
+def update_keyword(keyword_id):
+    """API untuk mengedit keyword"""
+    try:
+        data = request.get_json()
+        new_keyword = data.get('keyword', '').strip()
+        category = data.get('category', '').strip()
+        subcategory = data.get('subcategory', '').strip()
+        
+        if not new_keyword or not category or not subcategory:
+            return jsonify({'status': 'error', 'message': 'Keyword, kategori, dan sub-kategori harus diisi'})
+        
+        keywords = load_keywords()
+        keyword_found = False
+        
+        for kw in keywords:
+            if kw['id'] == keyword_id:
+                # Cek apakah keyword baru sudah ada di keyword lain dengan kategori dan sub-kategori yang sama
+                for other_kw in keywords:
+                    if (other_kw['id'] != keyword_id and 
+                        other_kw['keyword'].lower() == new_keyword.lower() and
+                        other_kw.get('category', '') == category and 
+                        other_kw.get('subcategory', '') == subcategory):
+                        return jsonify({'status': 'error', 'message': 'Keyword sudah ada di kategori dan sub-kategori ini'})
+                
+                kw['keyword'] = new_keyword
+                kw['category'] = category
+                kw['subcategory'] = subcategory
+                kw['updated_at'] = datetime.now().isoformat()
+                keyword_found = True
+                break
+        
+        if not keyword_found:
+            return jsonify({'status': 'error', 'message': 'Keyword tidak ditemukan'})
+        
+        if save_keywords(keywords):
+            return jsonify({'status': 'success', 'message': 'Keyword berhasil diperbarui'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Gagal menyimpan keyword'})
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/keywords/<int:keyword_id>', methods=['DELETE'])
+def delete_keyword(keyword_id):
+    """API untuk menghapus keyword"""
+    try:
+        keywords = load_keywords()
+        keywords = [kw for kw in keywords if kw['id'] != keyword_id]
+        
+        if save_keywords(keywords):
+            return jsonify({'status': 'success', 'message': 'Keyword berhasil dihapus'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Gagal menghapus keyword'})
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
 
 @app.route('/api/delete-file/<filename>')
 def delete_file(filename):

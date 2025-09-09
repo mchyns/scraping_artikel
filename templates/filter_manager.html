@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Manager - BPS News Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        
+        /* Warna BPS */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .nav-menu {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+        
+        .nav-menu ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-menu a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-menu a.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .panel h3 {
+            color: #1e3a8a;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .form-row input {
+            flex: 1;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        }
+        
+        .keyword-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .keyword-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .keyword-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        
+        .keyword-info {
+            flex: 1;
+        }
+        
+        .keyword-text {
+            font-weight: 600;
+            color: #1e3a8a;
+            font-size: 1.1rem;
+        }
+        
+        .keyword-meta {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .keyword-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .empty-state h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h3 {
+            color: #1e3a8a;
+            margin: 0;
+        }
+        
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .close:hover {
+            color: #374151;
+        }
+        
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .category-group {
+            margin-bottom: 2rem;
+        }
+        
+        .category-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .subcategory-section {
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            background: #f8fafc;
+        }
+        
+        .subcategory-header {
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .keywords-in-subcategory {
+            padding: 1rem;
+        }
+        
+        .keyword-item-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .keyword-item-compact:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        
+        .keyword-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        /* Category and Subcategory Styling */
+        .category-group {
+            margin-bottom: 2rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .subcategory-section {
+            background: #f8f9fa;
+        }
+        
+        .subcategory-header {
+            background: #e5e7eb;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #d1d5db;
+        }
+        
+        .keywords-in-subcategory {
+            padding: 1rem;
+        }
+        
+        .keyword-item-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .keyword-item-compact:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .keyword-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .keyword-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            
+            .keyword-item-compact {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            
+            .keyword-actions {
+                justify-content: center;
+            }
+            
+            .filter-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Filter Manager</h1>
+            <p>Kelola Keywords untuk Scraping Berita</p>
+            <div class="nav-menu">
+                <ul>
+                    <li><a href="/">🏠 Scraping</a></li>
+                    <li><a href="/data-manager">📊 Data Manager</a></li>
+                    <li><a href="/filter-manager" class="active">🔍 Filter Manager</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <!-- Alert Messages -->
+            <div id="alertContainer"></div>
+            
+            <!-- Add Keyword Panel -->
+            <div class="panel">
+                <h3>➕ Tambah Keyword Baru</h3>
+                <form id="addKeywordForm">
+                    <div class="form-group">
+                        <label for="categorySelect">Pilih Kategori BPS:</label>
+                        <select id="categorySelect" required>
+                            <option value="">-- Pilih Kategori --</option>
+                            {% for code, topic in topics.items() %}
+                                {% if topic is mapping and 'name' in topic %}
+                                    <option value="{{ code }}">{{ code }} - {{ topic.name }}</option>
+                                {% else %}
+                                    <option value="{{ code }}">{{ code }} - {{ topic }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subcategorySelect">Pilih Sub-kategori:</label>
+                        <select id="subcategorySelect" disabled required>
+                            <option value="">-- Pilih Kategori Dulu --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="newKeyword">Keyword:</label>
+                            <input type="text" id="newKeyword" placeholder="Masukkan keyword baru (contoh: ayam, sapi, padi, dll)" required>
+                        </div>
+                        <button type="submit" class="btn btn-small">Tambah</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Filter Panel -->
+            <div class="panel">
+                <h3>🔍 Filter Keywords</h3>
+                <div class="filter-controls">
+                    <div class="form-group">
+                        <label for="filterCategory">Filter Kategori:</label>
+                        <select id="filterCategory">
+                            <option value="">-- Semua Kategori --</option>
+                            {% for code, topic in topics.items() %}
+                                {% if topic is mapping and 'name' in topic %}
+                                    <option value="{{ code }}">{{ code }} - {{ topic.name }}</option>
+                                {% else %}
+                                    <option value="{{ code }}">{{ code }} - {{ topic }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterSubcategory">Filter Sub-kategori:</label>
+                        <select id="filterSubcategory" disabled>
+                            <option value="">-- Semua Sub-kategori --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Keywords List Panel -->
+            <div class="panel">
+                <h3>📝 Daftar Keywords</h3>
+                <div id="keywordsList">
+                    <!-- Keywords akan dimuat di sini -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Keyword</h3>
+                <button class="close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editKeywordForm">
+                <div class="form-group">
+                    <label for="editCategory">Kategori BPS:</label>
+                    <select id="editCategory" required>
+                        <option value="">-- Pilih Kategori --</option>
+                        {% for code, topic in topics.items() %}
+                            {% if topic is mapping and 'name' in topic %}
+                                <option value="{{ code }}">{{ code }} - {{ topic.name }}</option>
+                            {% else %}
+                                <option value="{{ code }}">{{ code }} - {{ topic }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editSubcategory">Sub-kategori:</label>
+                    <select id="editSubcategory" disabled required>
+                        <option value="">-- Pilih Kategori Dulu --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editKeyword">Keyword:</label>
+                    <input type="text" id="editKeyword" required>
+                    <input type="hidden" id="editKeywordId">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: end;">
+                    <button type="button" class="btn" style="background: #6b7280;" onclick="closeEditModal()">Batal</button>
+                    <button type="submit" class="btn btn-edit">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // BPS Topics data from server
+        const BPS_TOPICS = {{ topics|tojson }};
+        
+        // Load keywords when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadKeywords();
+            
+            // Setup category change handlers
+            document.getElementById('categorySelect').addEventListener('change', function() {
+                updateSubcategories('categorySelect', 'subcategorySelect');
+            });
+            
+            document.getElementById('filterCategory').addEventListener('change', function() {
+                updateSubcategories('filterCategory', 'filterSubcategory');
+                filterKeywords();
+            });
+            
+            document.getElementById('filterSubcategory').addEventListener('change', function() {
+                filterKeywords();
+            });
+            
+            document.getElementById('editCategory').addEventListener('change', function() {
+                updateSubcategories('editCategory', 'editSubcategory');
+            });
+        });
+        
+        // Add keyword form submission
+        document.getElementById('addKeywordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addKeyword();
+        });
+        
+        // Edit keyword form submission
+        document.getElementById('editKeywordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateKeyword();
+        });
+        
+        function updateSubcategories(categorySelectId, subcategorySelectId) {
+            const categorySelect = document.getElementById(categorySelectId);
+            const subcategorySelect = document.getElementById(subcategorySelectId);
+            const selectedCategory = categorySelect.value;
+            
+            subcategorySelect.innerHTML = subcategorySelectId === 'filterSubcategory' ? 
+                '<option value="">-- Semua Sub-kategori --</option>' : 
+                '<option value="">-- Pilih Sub-kategori --</option>';
+            
+            if (selectedCategory && BPS_TOPICS[selectedCategory] && BPS_TOPICS[selectedCategory].subcategories) {
+                subcategorySelect.disabled = false;
+                
+                Object.values(BPS_TOPICS[selectedCategory].subcategories).forEach(subcat => {
+                    if (subcat.subtopics) {
+                        // Add subtopics
+                        subcat.subtopics.forEach(subtopic => {
+                            const option = document.createElement('option');
+                            option.value = subtopic;
+                            option.textContent = subtopic;
+                            subcategorySelect.appendChild(option);
+                        });
+                    } else {
+                        // Add subcategory name directly
+                        const option = document.createElement('option');
+                        option.value = subcat.name;
+                        option.textContent = subcat.name;
+                        subcategorySelect.appendChild(option);
+                    }
+                });
+            } else {
+                subcategorySelect.disabled = true;
+            }
+        }
+        
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        function loadKeywords() {
+            fetch('/api/keywords')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        displayKeywords(data.keywords);
+                    } else {
+                        showAlert('Gagal memuat keywords', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error loading keywords', 'error');
+                });
+        }
+        
+        function displayKeywords(keywords) {
+            const container = document.getElementById('keywordsList');
+            
+            if (keywords.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h4>Belum ada keywords</h4>
+                        <p>Tambahkan keyword pertama Anda untuk memulai!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group keywords by category and subcategory
+            const grouped = {};
+            keywords.forEach(keyword => {
+                const category = keyword.category || 'Unknown';
+                const subcategory = keyword.subcategory || 'Unknown';
+                
+                if (!grouped[category]) {
+                    grouped[category] = {};
+                }
+                if (!grouped[category][subcategory]) {
+                    grouped[category][subcategory] = [];
+                }
+                grouped[category][subcategory].push(keyword);
+            });
+            
+            let html = '';
+            Object.keys(grouped).sort().forEach(category => {
+                const categoryName = BPS_TOPICS[category] ? BPS_TOPICS[category].name : category;
+                
+                html += `
+                    <div class="category-group">
+                        <div class="category-header">
+                            ${category} - ${categoryName}
+                        </div>
+                        <div class="subcategory-section">
+                `;
+                
+                Object.keys(grouped[category]).sort().forEach(subcategory => {
+                    html += `
+                        <div class="subcategory-header">
+                            📂 ${subcategory}
+                        </div>
+                        <div class="keywords-in-subcategory">
+                    `;
+                    
+                    grouped[category][subcategory].forEach(keyword => {
+                        html += `
+                            <div class="keyword-item-compact">
+                                <div>
+                                    <span class="keyword-badge">${keyword.keyword}</span>
+                                    <div class="keyword-meta" style="margin-top: 0.25rem;">
+                                        Dibuat: ${formatDate(keyword.created_at)}
+                                        ${keyword.updated_at ? `• Diperbarui: ${formatDate(keyword.updated_at)}` : ''}
+                                    </div>
+                                </div>
+                                <div class="keyword-actions">
+                                    <button class="btn btn-small btn-edit" onclick="editKeyword(${keyword.id}, '${keyword.keyword}', '${keyword.category}', '${keyword.subcategory}')">
+                                        ✏️
+                                    </button>
+                                    <button class="btn btn-small btn-delete" onclick="deleteKeyword(${keyword.id}, '${keyword.keyword}')">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                });
+                
+                html += '</div></div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function filterKeywords() {
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterSubcategory = document.getElementById('filterSubcategory').value;
+            
+            fetch('/api/keywords')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        let filteredKeywords = data.keywords;
+                        
+                        if (filterCategory) {
+                            filteredKeywords = filteredKeywords.filter(k => k.category === filterCategory);
+                        }
+                        
+                        if (filterSubcategory) {
+                            filteredKeywords = filteredKeywords.filter(k => k.subcategory === filterSubcategory);
+                        }
+                        
+                        displayKeywords(filteredKeywords);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error filtering keywords', 'error');
+                });
+        }
+        
+        function addKeyword() {
+            const keyword = document.getElementById('newKeyword').value.trim();
+            const category = document.getElementById('categorySelect').value;
+            const subcategory = document.getElementById('subcategorySelect').value;
+            
+            if (!keyword || !category || !subcategory) {
+                showAlert('Semua field harus diisi', 'error');
+                return;
+            }
+            
+            fetch('/api/keywords', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    keyword: keyword,
+                    category: category,
+                    subcategory: subcategory
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert(data.message);
+                    document.getElementById('newKeyword').value = '';
+                    document.getElementById('categorySelect').value = '';
+                    document.getElementById('subcategorySelect').value = '';
+                    document.getElementById('subcategorySelect').disabled = true;
+                    loadKeywords();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error adding keyword', 'error');
+            });
+        }
+        
+        function editKeyword(id, keyword, category, subcategory) {
+            document.getElementById('editKeywordId').value = id;
+            document.getElementById('editKeyword').value = keyword;
+            document.getElementById('editCategory').value = category;
+            updateSubcategories('editCategory', 'editSubcategory');
+            
+            // Wait a bit for subcategories to load, then set value
+            setTimeout(() => {
+                document.getElementById('editSubcategory').value = subcategory;
+            }, 100);
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        function updateKeyword() {
+            const id = document.getElementById('editKeywordId').value;
+            const keyword = document.getElementById('editKeyword').value.trim();
+            const category = document.getElementById('editCategory').value;
+            const subcategory = document.getElementById('editSubcategory').value;
+            
+            if (!keyword || !category || !subcategory) {
+                showAlert('Semua field harus diisi', 'error');
+                return;
+            }
+            
+            fetch(`/api/keywords/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    keyword: keyword,
+                    category: category,
+                    subcategory: subcategory
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert(data.message);
+                    closeEditModal();
+                    loadKeywords();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error updating keyword', 'error');
+            });
+        }
+        
+        function deleteKeyword(id, keyword) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus keyword "${keyword}"?`)) {
+                return;
+            }
+            
+            fetch(`/api/keywords/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert(data.message);
+                    loadKeywords();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error deleting keyword', 'error');
+            });
+        }
+        
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+    </script>
+</body>
+</html>
