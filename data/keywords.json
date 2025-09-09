@@ -47,5 +47,19 @@
     "category": "A",
     "subcategory": "Tanaman Pangan",
     "created_at": "2025-09-09T15:05:44.808977"
+  },
+  {
+    "id": 8,
+    "keyword": "Kost",
+    "category": "I",
+    "subcategory": "Penyediaan Akomodasi",
+    "created_at": "2025-09-09T15:14:54.787946"
+  },
+  {
+    "id": 9,
+    "keyword": "puskesmas",
+    "category": "Q",
+    "subcategory": "Jasa Kesehatan Manusia",
+    "created_at": "2025-09-09T15:21:15.178226"
   }
 ]

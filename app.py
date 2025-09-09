@@ -101,7 +101,17 @@ BPS_TOPICS = {
             "2": {"name": "Penyediaan Makan Minum"}
         }
     },
-    "J": {"name": "Informasi dan Komunikasi"},
+    "J": {
+        "name": "Informasi dan Komunikasi",
+        "subcategories": {
+            "1": {"name": "Penerbitan"},
+            "2": {"name": "Produksi Gambar Bergerak, Video dan Program Televisi"},
+            "3": {"name": "Penyiaran dan Pemrograman"},
+            "4": {"name": "Telekomunikasi"},
+            "5": {"name": "Jasa Informasi"},
+            "6": {"name": "Pemrograman, Konsultasi Komputer dan Kegiatan Ybdi"}
+        }
+    },
     "K": {
         "name": "Jasa Keuangan dan Asuransi",
         "subcategories": {
@@ -111,12 +121,90 @@ BPS_TOPICS = {
             "4": {"name": "Jasa Penunjang Keuangan"}
         }
     },
-    "L": {"name": "Real Estate"},
-    "M": {"name": "Jasa Perusahaan"},
-    "O": {"name": "Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial"},
-    "P": {"name": "Jasa Pendidikan"},
-    "Q": {"name": "Jasa Kesehatan dan Kegiatan Sosial"},
-    "R": {"name": "Jasa lainnya"}
+    "L": {
+        "name": "Real Estate",
+        "subcategories": {
+            "1": {"name": "Real Estate Atas Dasar Balas Jasa (Fee) atau Kontrak"},
+            "2": {"name": "Real Estate Atas Dasar Milik Sendiri atau Sewa"}
+        }
+    },
+    "M": {
+        "name": "Jasa Perusahaan",
+        "subcategories": {
+            "1": {"name": "Jasa Profesional, Ilmiah dan Teknis"},
+            "2": {"name": "Jasa Penyewaan dan Sewa Guna Usaha Tanpa Hak Opsi"},
+            "3": {"name": "Jasa Perekrutan dan Penempatan Tenaga Kerja"},
+            "4": {"name": "Jasa Agen Perjalanan, Penyelenggara Tur dan Jasa Reservasi"},
+            "5": {"name": "Jasa Penyelidikan dan Keamanan"},
+            "6": {"name": "Jasa Untuk Gedung dan Pertamanan"},
+            "7": {"name": "Jasa Administrasi Kantor dan Jasa Penunjang Kantor"},
+            "8": {"name": "Jasa Pendidikan"},
+            "9": {"name": "Jasa Kesehatan Manusia dan Aktivitas Sosial"}
+        }
+    },
+    "N": {
+        "name": "Jasa Administrasi dan Jasa Penunjang",
+        "subcategories": {
+            "1": {"name": "Jasa Administrasi Perkantoran dan Jasa Penunjang Kantor Lainnya"},
+            "2": {"name": "Jasa Penunjang Usaha Lainnya"}
+        }
+    },
+    "O": {
+        "name": "Administrasi Pemerintahan, Pertahanan dan Jaminan Sosial",
+        "subcategories": {
+            "1": {"name": "Administrasi Pemerintahan"},
+            "2": {"name": "Pertahanan"},
+            "3": {"name": "Jaminan Sosial Wajib"}
+        }
+    },
+    "P": {
+        "name": "Jasa Pendidikan",
+        "subcategories": {
+            "1": {"name": "Pendidikan Anak Usia Dini"},
+            "2": {"name": "Pendidikan Dasar"},
+            "3": {"name": "Pendidikan Menengah"},
+            "4": {"name": "Pendidikan Tinggi"},
+            "5": {"name": "Pendidikan Lainnya"},
+            "6": {"name": "Jasa Penunjang Pendidikan"}
+        }
+    },
+    "Q": {
+        "name": "Jasa Kesehatan dan Kegiatan Sosial",
+        "subcategories": {
+            "1": {"name": "Jasa Kesehatan Manusia"},
+            "2": {"name": "Jasa Kesehatan Hewan"},
+            "3": {"name": "Jasa Sosial"}
+        }
+    },
+    "R": {
+        "name": "Jasa lainnya",
+        "subcategories": {
+            "1": {"name": "Kegiatan Seni, Hiburan dan Rekreasi"},
+            "2": {"name": "Kegiatan Jasa Lainnya"},
+            "3": {"name": "Kegiatan Rumah Tangga Sebagai Pemberi Kerja"}
+        }
+    },
+    "S": {
+        "name": "Kegiatan Jasa Lainnya",
+        "subcategories": {
+            "1": {"name": "Jasa Reparasi dan Perawatan"},
+            "2": {"name": "Jasa Perorangan Lainnya"}
+        }
+    },
+    "T": {
+        "name": "Jasa Perorangan yang Melayani Rumah Tangga",
+        "subcategories": {
+            "1": {"name": "Kegiatan Rumah Tangga Sebagai Pemberi Kerja Untuk Keperluan Sendiri"},
+            "2": {"name": "Kegiatan Rumah Tangga Penghasil Barang Untuk Keperluan Sendiri"}
+        }
+    },
+    "U": {
+        "name": "Kegiatan Badan Internasional dan Badan Ekstra Internasional",
+        "subcategories": {
+            "1": {"name": "Kegiatan Badan Internasional"},
+            "2": {"name": "Kegiatan Badan Ekstra Internasional"}
+        }
+    }
 }
 
 # Daerah target
